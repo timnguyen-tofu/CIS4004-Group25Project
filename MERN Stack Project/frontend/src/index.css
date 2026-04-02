@@ -1,0 +1,14 @@
+/* Global reset — App.css handles all the real styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: #0a0a0f;
+  color: rgba(255, 255, 255, 0.92);
+  min-height: 100vh;
+  overflow-x: hidden;
+}

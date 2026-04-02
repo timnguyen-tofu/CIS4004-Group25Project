@@ -1,0 +1,302 @@
+// ── Messages.js ─────────────────────────────────────────────────
+// Split-pane messaging UI.
+// Left panel: conversation list.
+// Right panel: selected conversation thread + send box.
+// The route /messages/:userId pre-selects a conversation.
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
+import api from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
+import Navbar from './Navbar';
+
+export default function Messages() {
+  const { userId: paramUserId } = useParams();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { refresh: refreshUnread } = useNotifications();
+
+  const [conversations, setConversations] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loadingConvos, setLoadingConvos] = useState(true);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  // Listing context passed via navigation state (from ListingDetail)
+  const listingContext = location.state?.listing || null;
+  const [activeListing, setActiveListing] = useState(listingContext);
+
+  const messagesEndRef = useRef(null);
+
+  // Scroll to bottom of messages
+  function scrollToBottom() {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── Fetch conversation list ────────────────────────────────
+  const fetchConversations = useCallback(async () => {
+    try {
+      const res = await api.get('/messages/conversations');
+      setConversations(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingConvos(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  // ── If navigated with a userId param, open that conversation ─
+  useEffect(() => {
+    if (paramUserId && conversations.length >= 0) {
+      // Try to find existing conversation first
+      const existing = conversations.find(c => c.user._id === paramUserId);
+      if (existing) {
+        selectConversation(existing.user, existing.listing);
+      } else if (paramUserId) {
+        // New conversation — fetch the user's info
+        (async () => {
+          try {
+            // We'll just set a minimal user object; messages will confirm
+            setSelectedUser({ _id: paramUserId, username: 'User' });
+            if (listingContext) setActiveListing(listingContext);
+            await fetchMessages(paramUserId);
+          } catch (_) {}
+        })();
+      }
+    }
+    // eslint-disable-next-line
+  }, [paramUserId, conversations]);
+
+  // ── Fetch messages for selected conversation ───────────────
+  async function fetchMessages(userId) {
+    setLoadingMsgs(true);
+    try {
+      const res = await api.get(`/messages/${userId}`);
+      setMessages(res.data);
+      setTimeout(scrollToBottom, 100);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMsgs(false);
+    }
+  }
+
+  async function selectConversation(convUser, listing = null) {
+    setSelectedUser(convUser);
+    setActiveListing(listing || null);
+    await fetchMessages(convUser._id);
+    // Mark all messages from this user as read, then refresh badge + convo list
+    try {
+      await api.patch(`/messages/${convUser._id}/read`);
+      refreshUnread();
+      // Clear unread count on the conversation locally
+      setConversations(prev =>
+        prev.map(c => c.user._id.toString() === convUser._id.toString() ? { ...c, unreadCount: 0 } : c)
+      );
+    } catch (_) {}
+  }
+
+  // ── Send a message ─────────────────────────────────────────
+  async function handleSend(e) {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedUser) return;
+
+    setSending(true);
+    try {
+      const payload = {
+        receiver: selectedUser._id,
+        content:  newMessage.trim(),
+        listing:  activeListing?.id || null
+      };
+      const res = await api.post('/messages', payload);
+      setMessages(prev => [...prev, res.data]);
+      setNewMessage('');
+      setTimeout(scrollToBottom, 50);
+      fetchConversations(); // Refresh conversation list
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send message.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleTimeString('en-US', {
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric'
+    });
+  }
+
+  function getDisplayName(u) {
+    if (!u) return 'Unknown';
+    return u.firstName ? `${u.firstName} ${u.lastName}` : u.username;
+  }
+
+  return (
+    <div className="app-layout">
+      <Navbar />
+
+      <main className="messages-layout">
+        {/* ── Left: Conversations Panel ── */}
+        <aside className="convo-panel glass">
+          <h2 className="convo-panel-title">💬 Messages</h2>
+
+          {loadingConvos ? (
+            <div className="loading-state-sm"><div className="spinner spinner-sm" /></div>
+          ) : conversations.length === 0 ? (
+            <div className="convo-empty">
+              <p>No conversations yet.</p>
+              <p className="txt-muted">Message a seller from any listing.</p>
+            </div>
+          ) : (
+            <ul className="convo-list">
+              {conversations.map(convo => {
+                const hasUnread = convo.unreadCount > 0;
+                return (
+                  <li
+                    key={convo.user._id}
+                    className={`convo-item ${selectedUser?._id?.toString() === convo.user._id?.toString() ? 'convo-active' : ''} ${hasUnread ? 'convo-unread' : ''}`}
+                    onClick={() => selectConversation(convo.user, convo.listing)}
+                  >
+                    <div className="convo-avatar">
+                      {getDisplayName(convo.user).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="convo-info">
+                      <span className="convo-name" style={hasUnread ? { color: 'var(--txt)', fontWeight: 700 } : {}}>
+                        {getDisplayName(convo.user)}
+                      </span>
+                      {convo.listing && (
+                        <span className="convo-listing-tag">re: {convo.listing.title}</span>
+                      )}
+                      <span className="convo-last" style={hasUnread ? { color: 'var(--txt-muted)', fontWeight: 600 } : {}}>
+                        {convo.lastMessage?.content?.slice(0, 40)}
+                        {(convo.lastMessage?.content?.length || 0) > 40 ? '…' : ''}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                      <span className="convo-date">{formatDate(convo.lastMessage?.createdAt)}</span>
+                      {hasUnread && (
+                        <span className="convo-unread-badge">{convo.unreadCount}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </aside>
+
+        {/* ── Right: Chat Panel ── */}
+        <section className="chat-panel">
+          {!selectedUser ? (
+            <div className="chat-empty">
+              <span className="empty-icon">💬</span>
+              <p>Select a conversation or message a seller from a listing.</p>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div className="chat-header glass">
+                <div className="chat-header-avatar">
+                  {getDisplayName(selectedUser).charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="chat-header-name">{getDisplayName(selectedUser)}</div>
+                  {activeListing && (
+                    <div className="chat-header-listing">re: {activeListing.title}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="chat-messages">
+                {loadingMsgs ? (
+                  <div className="loading-state"><div className="spinner" /></div>
+                ) : messages.length === 0 ? (
+                  <div className="chat-no-messages">
+                    <p>No messages yet. Say hello! 👋</p>
+                    {activeListing && (
+                      <p className="txt-muted">Asking about: <strong>{activeListing.title}</strong></p>
+                    )}
+                  </div>
+                ) : (
+                  messages.map((msg, idx) => {
+                    const isMe = msg.sender?._id === user.id || msg.sender === user.id;
+                    const prevMsg = messages[idx - 1];
+                    const showDate = !prevMsg ||
+                      new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
+
+                    return (
+                      <React.Fragment key={msg._id}>
+                        {showDate && (
+                          <div className="chat-date-divider">
+                            {formatDate(msg.createdAt)}
+                          </div>
+                        )}
+                        <div className={`chat-bubble-row ${isMe ? 'mine' : 'theirs'}`}>
+                          <div className={`chat-bubble ${isMe ? 'bubble-mine' : 'bubble-theirs'}`}>
+                            {msg.listing && (
+                              <div className="bubble-listing-tag">
+                                📦 {msg.listing.title}
+                              </div>
+                            )}
+                            <p className="bubble-text">{msg.content}</p>
+                            <span className="bubble-time">{formatTime(msg.createdAt)}</span>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Send box */}
+              <form className="chat-send-form glass" onSubmit={handleSend}>
+                {activeListing && (
+                  <div className="send-listing-context">
+                    📦 {activeListing.title}
+                    <button
+                      type="button"
+                      className="clear-listing"
+                      onClick={() => setActiveListing(null)}
+                    >✕</button>
+                  </div>
+                )}
+                <div className="send-row">
+                  <input
+                    className="form-input send-input"
+                    type="text"
+                    placeholder="Type a message…"
+                    value={newMessage}
+                    onChange={e => setNewMessage(e.target.value)}
+                    disabled={sending}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-gold"
+                    disabled={sending || !newMessage.trim()}
+                  >
+                    {sending ? '…' : 'Send'}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}

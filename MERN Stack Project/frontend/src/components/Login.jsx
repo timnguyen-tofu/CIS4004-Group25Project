@@ -1,7 +1,3 @@
-// ── Login.jsx ───────────────────────────────────────────────────
-// Split-layout login page matching the Knight Market mockup design.
-// Left: branding + stats  |  Right: glass login card
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -38,7 +34,7 @@ export default function Login() {
     <div className="login-wrap">
       <div className="login-container">
 
-        {/* ── Left: Branding ── */}
+        {/* branding */}
         <div className="login-brand">
           <span className="lb-icon">⚔️</span>
           <div className="lb-name">Knight Market</div>
@@ -62,7 +58,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* ── Right: Login Card ── */}
+        {/* login card */}
         <div className="login-card">
           <h2>Welcome back</h2>
           <p className="sub">Sign in to your Knight Market account</p>
@@ -95,12 +91,7 @@ export default function Login() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-gold btn-full"
-              style={{ marginTop: '6px' }}
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-gold btn-full" style={{ marginTop: '6px' }} disabled={loading}>
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>

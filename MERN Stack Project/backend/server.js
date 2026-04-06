@@ -1,31 +1,22 @@
-// ============================================================
-// Knight Market - Backend Server
-// Express.js + MongoDB (Mongoose)
-// ============================================================
-
 const express = require('express');
 const mongoose = require('mongoose');
-const cors    = require('cors');
-const path    = require('path');
+const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// ── Middleware ───────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
-// Serve uploaded listing images as static files
 app.use('/listing-images', express.static(path.join(__dirname, 'listing-images')));
 
-// ── Import Routes ────────────────────────────────────────────
-const authRoutes       = require('./routes/auth');
-const listingRoutes    = require('./routes/listings');
-const eventRoutes      = require('./routes/events');
-const messageRoutes    = require('./routes/messages');
-const userRoutes       = require('./routes/users');
-const categoryRoutes   = require('./routes/categories');
+const authRoutes     = require('./routes/auth');
+const listingRoutes  = require('./routes/listings');
+const eventRoutes    = require('./routes/events');
+const messageRoutes  = require('./routes/messages');
+const userRoutes     = require('./routes/users');
+const categoryRoutes = require('./routes/categories');
 
-// ── Use Routes ───────────────────────────────────────────────
 app.use('/api/auth',       authRoutes);
 app.use('/api/listings',   listingRoutes);
 app.use('/api/events',     eventRoutes);
@@ -33,22 +24,15 @@ app.use('/api/messages',   messageRoutes);
 app.use('/api/users',      userRoutes);
 app.use('/api/categories', categoryRoutes);
 
-// ── Root route (health check) ────────────────────────────────
-app.get('/', (req, res) => {
-  res.json({ message: 'Knight Market API is running!' });
-});
+app.get('/', (req, res) => res.json({ message: 'Knight Market API is running!' }));
 
-// ── Connect to MongoDB and start server ──────────────────────
+const seed = require('./seed');
 const PORT = process.env.PORT || 8000;
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on http://localhost:${PORT}`);
-    });
+mongoose.connect(process.env.MONGO_URI)
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    await seed();
+    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
   })
-  .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
-  });
+  .catch(err => console.error('MongoDB connection failed:', err.message));

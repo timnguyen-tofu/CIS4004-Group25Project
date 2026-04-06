@@ -1,6 +1,3 @@
-// ── CreateListing.jsx ──────────────────────────────────────────
-// Form to create a new listing, then optionally upload up to 5 images.
-
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
@@ -10,8 +7,8 @@ import Sidebar from './Sidebar';
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
 
 export default function CreateListing() {
-  const navigate  = useNavigate();
-  const fileRef   = useRef(null);
+  const navigate = useNavigate();
+  const fileRef  = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
@@ -26,9 +23,7 @@ export default function CreateListing() {
   useEffect(() => {
     api.get('/categories').then(res => {
       setCategories(res.data);
-      if (res.data.length > 0) {
-        setForm(f => ({ ...f, category: res.data[0].name }));
-      }
+      if (res.data.length > 0) setForm(f => ({ ...f, category: res.data[0].name }));
     }).catch(console.error);
   }, []);
 
@@ -37,11 +32,9 @@ export default function CreateListing() {
   }
 
   function handleFilePick(e) {
-    const incoming = Array.from(e.target.files);
-    const combined = [...selectedFiles, ...incoming].slice(0, 5);
+    const combined = [...selectedFiles, ...Array.from(e.target.files)].slice(0, 5);
     setSelectedFiles(combined);
-    const urls = combined.map(f => URL.createObjectURL(f));
-    setPreviews(urls);
+    setPreviews(combined.map(f => URL.createObjectURL(f)));
     e.target.value = '';
   }
 
@@ -56,20 +49,15 @@ export default function CreateListing() {
     setError('');
     const price = parseFloat(form.price);
     if (isNaN(price) || price < 0) return setError('Please enter a valid price.');
-
     setLoading(true);
     try {
       const res = await api.post('/listings', { ...form, price });
       const listingId = res.data._id;
-
       if (selectedFiles.length > 0) {
         const fd = new FormData();
         selectedFiles.forEach(f => fd.append('images', f));
-        await api.post(`/listings/${listingId}/images`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post(`/listings/${listingId}/images`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
-
       navigate(`/listings/${listingId}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create listing.');
@@ -93,33 +81,21 @@ export default function CreateListing() {
           {error && <div className="alert alert-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
-            {/* ── Photos upload area ── */}
+            {/* photo upload */}
             <div className="form-group">
               <label className="form-label">Photos (up to 5)</label>
               <div className="upload-area" onClick={() => fileRef.current?.click()}>
                 <span className="upload-icon"></span>
                 <p><strong>Click to add photos</strong></p>
                 <p>{selectedFiles.length}/5 selected</p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={handleFilePick}
-                />
+                <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFilePick} />
               </div>
-
               {previews.length > 0 && (
                 <div className="img-preview-grid">
                   {previews.map((url, i) => (
                     <div key={i} className="img-preview-item">
                       <img src={url} alt={`preview ${i + 1}`} />
-                      <button
-                        type="button"
-                        className="img-preview-delete"
-                        onClick={() => removePreview(i)}
-                      >✕</button>
+                      <button type="button" className="img-preview-delete" onClick={() => removePreview(i)}>✕</button>
                     </div>
                   ))}
                 </div>
@@ -128,29 +104,22 @@ export default function CreateListing() {
 
             <div className="form-group">
               <label className="form-label">Title *</label>
-              <input className="form-input" type="text" name="title"
-                placeholder="What are you selling?" value={form.title}
-                onChange={handleChange} required />
+              <input className="form-input" type="text" name="title" placeholder="What are you selling?" value={form.title} onChange={handleChange} required />
             </div>
 
             <div className="form-group">
               <label className="form-label">Description</label>
-              <textarea className="form-input form-textarea" name="description"
-                placeholder="Describe your item…" value={form.description}
-                onChange={handleChange} rows={4} />
+              <textarea className="form-input form-textarea" name="description" placeholder="Describe your item…" value={form.description} onChange={handleChange} rows={4} />
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Price ($) *</label>
-                <input className="form-input" type="number" name="price"
-                  placeholder="0.00" min="0" step="0.01"
-                  value={form.price} onChange={handleChange} required />
+                <input className="form-input" type="number" name="price" placeholder="0.00" min="0" step="0.01" value={form.price} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label className="form-label">Category *</label>
-                <select className="form-input form-select" name="category"
-                  value={form.category} onChange={handleChange} required>
+                <select className="form-input form-select" name="category" value={form.category} onChange={handleChange} required>
                   {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
@@ -159,16 +128,13 @@ export default function CreateListing() {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Condition *</label>
-                <select className="form-input form-select" name="condition"
-                  value={form.condition} onChange={handleChange} required>
+                <select className="form-input form-select" name="condition" value={form.condition} onChange={handleChange} required>
                   {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Location</label>
-                <input className="form-input" type="text" name="location"
-                  placeholder="UCF Main Campus" value={form.location}
-                  onChange={handleChange} />
+                <input className="form-input" type="text" name="location" placeholder="UCF Main Campus" value={form.location} onChange={handleChange} />
               </div>
             </div>
 

@@ -1,7 +1,3 @@
-// ── AdminDashboard.js ───────────────────────────────────────────
-// Admin-only page.
-// Shows stats, manages all users, listings, and categories.
-
 import { useEffect, useState } from 'react';
 import api from '../api';
 import Navbar from './Navbar';
@@ -12,26 +8,21 @@ const TABS = ['Overview', 'Users', 'Listings', 'Categories'];
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
 
-  // Overview stats
-  const [stats, setStats] = useState(null);
+  const [stats, setStats]             = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Users
-  const [users, setUsers] = useState([]);
+  const [users, setUsers]               = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
 
-  // Listings
-  const [listings, setListings] = useState([]);
+  const [listings, setListings]               = useState([]);
   const [listingsLoading, setListingsLoading] = useState(false);
 
-  // Categories
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories]               = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [categoryError, setCategoryError] = useState('');
-  const [categoryAdding, setCategoryAdding] = useState(false);
+  const [newCategoryName, setNewCategoryName]     = useState('');
+  const [categoryError, setCategoryError]         = useState('');
+  const [categoryAdding, setCategoryAdding]       = useState(false);
 
-  // ── Fetch on tab switch ──────────────────────────────────────
   useEffect(() => {
     if (activeTab === 'Overview')   fetchStats();
     if (activeTab === 'Users')      fetchUsers();
@@ -87,7 +78,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // ── User actions ─────────────────────────────────────────────
   async function toggleRole(userId, currentRole) {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
     if (!window.confirm(`Change this user to ${newRole}?`)) return;
@@ -109,7 +99,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // ── Listing actions ──────────────────────────────────────────
   async function deleteListing(listingId) {
     if (!window.confirm('Delete this listing?')) return;
     try {
@@ -120,7 +109,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // ── Category actions ─────────────────────────────────────────
   async function handleAddCategory(e) {
     e.preventDefault();
     setCategoryError('');
@@ -138,7 +126,7 @@ export default function AdminDashboard() {
   }
 
   async function handleDeleteCategory(id, name) {
-    if (!window.confirm(`Delete category "${name}"? Existing listings will keep this category label but it will no longer appear in filters.`)) return;
+    if (!window.confirm(`Delete category "${name}"?`)) return;
     try {
       await api.delete(`/categories/${id}`);
       setCategories(prev => prev.filter(c => c._id !== id));
@@ -160,7 +148,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
         <div className="tabs glass">
           {TABS.map(tab => (
             <button
@@ -173,7 +160,6 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* ── Overview Tab ── */}
         {activeTab === 'Overview' && (
           <div className="admin-overview">
             {statsLoading ? (
@@ -219,11 +205,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Users Tab ── */}
         {activeTab === 'Users' && (
           <div className="admin-table-section">
             <h2 className="section-title">All Users ({users.length})</h2>
-
             {usersLoading ? (
               <div className="loading-state"><div className="spinner" /><p>Loading users…</p></div>
             ) : users.length === 0 ? (
@@ -233,44 +217,25 @@ export default function AdminDashboard() {
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Joined</th>
-                      <th>Actions</th>
+                      <th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map(u => (
                       <tr key={u._id}>
-                        <td>
-                          {u.firstName || u.lastName
-                            ? `${u.firstName} ${u.lastName}`.trim()
-                            : '—'}
-                        </td>
+                        <td>{u.firstName || u.lastName ? `${u.firstName} ${u.lastName}`.trim() : '—'}</td>
                         <td>@{u.username}</td>
                         <td>{u.email}</td>
                         <td>
-                          <span className={`badge ${u.role === 'admin' ? 'badge-gold' : 'badge-blue'}`}>
-                            {u.role}
-                          </span>
+                          <span className={`badge ${u.role === 'admin' ? 'badge-gold' : 'badge-blue'}`}>{u.role}</span>
                         </td>
                         <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td>
                           <div className="table-actions">
-                            <button
-                              className="btn btn-outline btn-xs"
-                              onClick={() => toggleRole(u._id, u.role)}
-                            >
+                            <button className="btn btn-outline btn-xs" onClick={() => toggleRole(u._id, u.role)}>
                               {u.role === 'admin' ? 'Demote' : 'Make Admin'}
                             </button>
-                            <button
-                              className="btn btn-danger btn-xs"
-                              onClick={() => deleteUser(u._id)}
-                            >
-                              Delete
-                            </button>
+                            <button className="btn btn-danger btn-xs" onClick={() => deleteUser(u._id)}>Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -282,11 +247,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Listings Tab ── */}
         {activeTab === 'Listings' && (
           <div className="admin-table-section">
             <h2 className="section-title">All Listings ({listings.length})</h2>
-
             {listingsLoading ? (
               <div className="loading-state"><div className="spinner" /><p>Loading listings…</p></div>
             ) : listings.length === 0 ? (
@@ -296,13 +259,7 @@ export default function AdminDashboard() {
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Title</th>
-                      <th>Category</th>
-                      <th>Price</th>
-                      <th>Condition</th>
-                      <th>Status</th>
-                      <th>Seller</th>
-                      <th>Actions</th>
+                      <th>Title</th><th>Category</th><th>Price</th><th>Condition</th><th>Status</th><th>Seller</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -313,18 +270,11 @@ export default function AdminDashboard() {
                         <td>${l.price.toFixed(2)}</td>
                         <td>{l.condition}</td>
                         <td>
-                          <span className={`badge ${l.status === 'active' ? 'badge-green' : 'badge-red'}`}>
-                            {l.status}
-                          </span>
+                          <span className={`badge ${l.status === 'active' ? 'badge-green' : 'badge-red'}`}>{l.status}</span>
                         </td>
                         <td>{l.seller?.username || '—'}</td>
                         <td>
-                          <button
-                            className="btn btn-danger btn-xs"
-                            onClick={() => deleteListing(l._id)}
-                          >
-                            Delete
-                          </button>
+                          <button className="btn btn-danger btn-xs" onClick={() => deleteListing(l._id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -335,12 +285,10 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Categories Tab ── */}
         {activeTab === 'Categories' && (
           <div className="admin-table-section">
             <h2 className="section-title">Listing Categories ({categories.length})</h2>
 
-            {/* Add category form */}
             <div className="glass" style={{ padding: '20px', marginBottom: '20px', borderRadius: '12px' }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: 'var(--txt)' }}>Add New Category</h3>
               {categoryError && <div className="alert alert-error" style={{ marginBottom: 12 }}>{categoryError}</div>}
@@ -367,11 +315,7 @@ export default function AdminDashboard() {
               <div className="admin-table-wrapper glass">
                 <table className="admin-table">
                   <thead>
-                    <tr>
-                      <th>Category Name</th>
-                      <th>Created</th>
-                      <th>Actions</th>
-                    </tr>
+                    <tr><th>Category Name</th><th>Created</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {categories.map(c => (
@@ -379,12 +323,7 @@ export default function AdminDashboard() {
                         <td>{c.name}</td>
                         <td>{new Date(c.createdAt).toLocaleDateString()}</td>
                         <td>
-                          <button
-                            className="btn btn-danger btn-xs"
-                            onClick={() => handleDeleteCategory(c._id, c.name)}
-                          >
-                            Delete
-                          </button>
+                          <button className="btn btn-danger btn-xs" onClick={() => handleDeleteCategory(c._id, c.name)}>Delete</button>
                         </td>
                       </tr>
                     ))}

@@ -1,9 +1,3 @@
-// ── Messages.js ─────────────────────────────────────────────────
-// Split-pane messaging UI.
-// Left panel: conversation list.
-// Right panel: selected conversation thread + send box.
-// The route /messages/:userId pre-selects a conversation.
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import api from '../api';
@@ -17,14 +11,14 @@ export default function Messages() {
   const { user } = useAuth();
 
   const [conversations, setConversations] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [selectedUser, setSelectedUser]   = useState(null);
+  const [messages, setMessages]           = useState([]);
+  const [newMessage, setNewMessage]       = useState('');
   const [loadingConvos, setLoadingConvos] = useState(true);
-  const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [loadingMsgs, setLoadingMsgs]     = useState(false);
+  const [sending, setSending]             = useState(false);
 
-  // Listing context passed via navigation state (from ListingDetail)
+  // listing context passed via nav state from ListingDetail
   const listingContext = location.state?.listing || null;
   const [activeListing, setActiveListing] = useState(listingContext);
 
@@ -34,7 +28,6 @@ export default function Messages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  // ── Fetch conversation list ────────────────────────────────
   const fetchConversations = useCallback(async () => {
     try {
       const res = await api.get('/messages/conversations');
@@ -50,10 +43,9 @@ export default function Messages() {
     fetchConversations();
   }, [fetchConversations]);
 
-  // ── If navigated with a userId param, open that conversation ─
+  // if navigated with a userId, open that conversation
   useEffect(() => {
     if (!paramUserId || loadingConvos) return;
-
     const existing = conversations.find(c => c.user._id.toString() === paramUserId);
     if (existing) {
       selectConversation(existing.user, existing.listing);
@@ -69,7 +61,6 @@ export default function Messages() {
     // eslint-disable-next-line
   }, [paramUserId, loadingConvos]);
 
-  // ── Fetch messages for selected conversation ───────────────
   async function fetchMessages(userId) {
     setLoadingMsgs(true);
     try {
@@ -89,19 +80,16 @@ export default function Messages() {
     await fetchMessages(convUser._id);
   }
 
-  // ── Send a message ─────────────────────────────────────────
   async function handleSend(e) {
     e.preventDefault();
     if (!newMessage.trim() || !selectedUser) return;
-
     setSending(true);
     try {
-      const payload = {
+      const res = await api.post('/messages', {
         receiver: selectedUser._id,
         content:  newMessage.trim(),
         listing:  activeListing?.id || null
-      };
-      const res = await api.post('/messages', payload);
+      });
       setMessages(prev => [...prev, res.data]);
       setNewMessage('');
       setTimeout(scrollToBottom, 50);
@@ -114,15 +102,11 @@ export default function Messages() {
   }
 
   function formatTime(dateStr) {
-    return new Date(dateStr).toLocaleTimeString('en-US', {
-      hour: '2-digit', minute: '2-digit'
-    });
+    return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
   function formatDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric'
-    });
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   function getDisplayName(u) {
@@ -136,7 +120,7 @@ export default function Messages() {
       <Sidebar />
 
       <main className="messages-layout">
-        {/* ── Left: Conversations Panel ── */}
+        {/* conversation list */}
         <aside className="convo-panel glass">
           <h2 className="convo-panel-title">Messages</h2>
 
@@ -155,16 +139,10 @@ export default function Messages() {
                   className={`convo-item ${selectedUser?._id?.toString() === convo.user._id?.toString() ? 'convo-active' : ''}`}
                   onClick={() => selectConversation(convo.user, convo.listing)}
                 >
-                  <div className="convo-avatar">
-                    {getDisplayName(convo.user).charAt(0).toUpperCase()}
-                  </div>
+                  <div className="convo-avatar">{getDisplayName(convo.user).charAt(0).toUpperCase()}</div>
                   <div className="convo-info">
-                    <span className="convo-name">
-                      {getDisplayName(convo.user)}
-                    </span>
-                    {convo.listing && (
-                      <span className="convo-listing-tag">re: {convo.listing.title}</span>
-                    )}
+                    <span className="convo-name">{getDisplayName(convo.user)}</span>
+                    {convo.listing && <span className="convo-listing-tag">re: {convo.listing.title}</span>}
                     <span className="convo-last">
                       {convo.lastMessage?.content?.slice(0, 40)}
                       {(convo.lastMessage?.content?.length || 0) > 40 ? '…' : ''}
@@ -177,7 +155,7 @@ export default function Messages() {
           )}
         </aside>
 
-        {/* ── Right: Chat Panel ── */}
+        {/* chat panel */}
         <section className="chat-panel">
           {!selectedUser ? (
             <div className="chat-empty">
@@ -185,29 +163,21 @@ export default function Messages() {
             </div>
           ) : (
             <>
-              {/* Chat header */}
               <div className="chat-header glass">
-                <div className="chat-header-avatar">
-                  {getDisplayName(selectedUser).charAt(0).toUpperCase()}
-                </div>
+                <div className="chat-header-avatar">{getDisplayName(selectedUser).charAt(0).toUpperCase()}</div>
                 <div>
                   <div className="chat-header-name">{getDisplayName(selectedUser)}</div>
-                  {activeListing && (
-                    <div className="chat-header-listing">re: {activeListing.title}</div>
-                  )}
+                  {activeListing && <div className="chat-header-listing">re: {activeListing.title}</div>}
                 </div>
               </div>
 
-              {/* Messages */}
               <div className="chat-messages">
                 {loadingMsgs ? (
                   <div className="loading-state"><div className="spinner" /></div>
                 ) : messages.length === 0 ? (
                   <div className="chat-no-messages">
                     <p>No messages yet. Say hello!</p>
-                    {activeListing && (
-                      <p className="txt-muted">Asking about: <strong>{activeListing.title}</strong></p>
-                    )}
+                    {activeListing && <p className="txt-muted">Asking about: <strong>{activeListing.title}</strong></p>}
                   </div>
                 ) : (
                   messages.map((msg, idx) => {
@@ -218,18 +188,10 @@ export default function Messages() {
 
                     return (
                       <React.Fragment key={msg._id}>
-                        {showDate && (
-                          <div className="chat-date-divider">
-                            {formatDate(msg.createdAt)}
-                          </div>
-                        )}
+                        {showDate && <div className="chat-date-divider">{formatDate(msg.createdAt)}</div>}
                         <div className={`chat-bubble-row ${isMe ? 'mine' : 'theirs'}`}>
                           <div className={`chat-bubble ${isMe ? 'bubble-mine' : 'bubble-theirs'}`}>
-                            {msg.listing && (
-                              <div className="bubble-listing-tag">
-                                {msg.listing.title}
-                              </div>
-                            )}
+                            {msg.listing && <div className="bubble-listing-tag">{msg.listing.title}</div>}
                             <p className="bubble-text">{msg.content}</p>
                             <span className="bubble-time">{formatTime(msg.createdAt)}</span>
                           </div>
@@ -241,16 +203,11 @@ export default function Messages() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Send box */}
               <form className="chat-send-form glass" onSubmit={handleSend}>
                 {activeListing && (
                   <div className="send-listing-context">
                     {activeListing.title}
-                    <button
-                      type="button"
-                      className="clear-listing"
-                      onClick={() => setActiveListing(null)}
-                    >✕</button>
+                    <button type="button" className="clear-listing" onClick={() => setActiveListing(null)}>✕</button>
                   </div>
                 )}
                 <div className="send-row">
@@ -262,11 +219,7 @@ export default function Messages() {
                     onChange={e => setNewMessage(e.target.value)}
                     disabled={sending}
                   />
-                  <button
-                    type="submit"
-                    className="btn btn-gold"
-                    disabled={sending || !newMessage.trim()}
-                  >
+                  <button type="submit" className="btn btn-gold" disabled={sending || !newMessage.trim()}>
                     {sending ? '…' : 'Send'}
                   </button>
                 </div>

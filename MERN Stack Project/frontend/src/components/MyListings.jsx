@@ -1,6 +1,3 @@
-// ── MyListings.js ───────────────────────────────────────────────
-// Shows all listings posted by the currently logged-in user.
-
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -9,7 +6,7 @@ import Sidebar from './Sidebar';
 
 export default function MyListings() {
   const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,25 +76,13 @@ export default function MyListings() {
                 </div>
 
                 <h3 className="listing-title">{listing.title}</h3>
-                <p className="listing-description">
-                  {listing.description || 'No description.'}
-                </p>
+                <p className="listing-description">{listing.description || 'No description.'}</p>
 
                 <div className="listing-card-footer">
                   <span className="listing-price">${listing.price.toFixed(2)}</span>
                   <div className="listing-actions" onClick={e => e.stopPropagation()}>
-                    <Link
-                      to={`/edit-listing/${listing._id}`}
-                      className="btn btn-outline btn-xs"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      className="btn btn-danger btn-xs"
-                      onClick={(e) => handleDelete(listing._id, e)}
-                    >
-                      Delete
-                    </button>
+                    <Link to={`/edit-listing/${listing._id}`} className="btn btn-outline btn-xs">Edit</Link>
+                    <button className="btn btn-danger btn-xs" onClick={e => handleDelete(listing._id, e)}>Delete</button>
                   </div>
                 </div>
               </div>

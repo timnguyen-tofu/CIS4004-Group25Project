@@ -1,6 +1,3 @@
-// ── Marketplace.jsx ────────────────────────────────────────────
-// Main browse page — glass listing cards with images, search, category pills.
-
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
@@ -8,13 +5,13 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 export default function Marketplace() {
-  const [listings, setListings]   = useState([]);
+  const [listings, setListings]     = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [search, setSearch]       = useState('');
-  const [category, setCategory]   = useState('All');
-  const navigate                  = useNavigate();
-  const [searchParams]            = useSearchParams();
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState('');
+  const [category, setCategory]     = useState('All');
+  const navigate                    = useNavigate();
+  const [searchParams]              = useSearchParams();
 
   useEffect(() => {
     api.get('/categories').then(res => setCategories(res.data)).catch(console.error);
@@ -56,7 +53,6 @@ export default function Marketplace() {
       <Sidebar />
 
       <main className="page-content">
-        {/* ── Header ── */}
         <div className="page-header">
           <div>
             <h1 className="page-title">Marketplace</h1>
@@ -65,7 +61,7 @@ export default function Marketplace() {
           <Link to="/create-listing" className="btn btn-gold">+ Sell Item</Link>
         </div>
 
-        {/* ── Search ── */}
+        {/* search */}
         <div className="filter-bar glass" style={{ marginBottom: 16 }}>
           <form onSubmit={handleSearchSubmit} className="search-form">
             <input
@@ -79,12 +75,9 @@ export default function Marketplace() {
           </form>
         </div>
 
-        {/* ── Category pills ── */}
+        {/* category filter pills */}
         <div className="cat-bar">
-          <button
-            className={`cat-pill ${category === 'All' ? 'active' : ''}`}
-            onClick={() => setCategory('All')}
-          >
+          <button className={`cat-pill ${category === 'All' ? 'active' : ''}`} onClick={() => setCategory('All')}>
             All
           </button>
           {categories.map(cat => (
@@ -98,7 +91,7 @@ export default function Marketplace() {
           ))}
         </div>
 
-        {/* ── Listings Grid ── */}
+        {/* listings grid */}
         {loading ? (
           <div className="loading-state">
             <div className="spinner" />

@@ -1,6 +1,3 @@
-// ── ListingDetail.jsx ──────────────────────────────────────────
-// Full detail view — image gallery with thumbnails, info card, message seller.
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api';
@@ -8,17 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const CATEGORY_ICONS = {};
-
 export default function ListingDetail() {
-  const { id }        = useParams();
-  const { user }      = useAuth();
-  const navigate      = useNavigate();
+  const { id }   = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const [listing, setListing]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError]       = useState('');
+  const [listing, setListing]     = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [deleting, setDeleting]   = useState(false);
+  const [error, setError]         = useState('');
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
@@ -39,7 +34,7 @@ export default function ListingDetail() {
   }
 
   async function handleDelete() {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    if (!window.confirm('Delete this listing?')) return;
     setDeleting(true);
     try {
       await api.delete(`/listings/${id}`);
@@ -75,7 +70,6 @@ export default function ListingDetail() {
     : listing.seller?.username || 'Unknown';
 
   const hasImages = listing.images && listing.images.length > 0;
-  const icon      = CATEGORY_ICONS[listing.category] || '📦';
 
   return (
     <div className="app-layout">
@@ -86,12 +80,12 @@ export default function ListingDetail() {
         <Link to="/marketplace" className="back-link">← Back to Marketplace</Link>
 
         <div className="detail-grid">
-          {/* ── Left: Images ── */}
+          {/* images */}
           <div>
             <div className="detail-main-img">
               {hasImages
                 ? <img src={`/listing-images/${listing.images[activeImg]}`} alt={listing.title} />
-                : <span>{icon}</span>
+                : <span>📦</span>
               }
             </div>
 
@@ -110,7 +104,7 @@ export default function ListingDetail() {
             )}
           </div>
 
-          {/* ── Right: Info ── */}
+          {/* info */}
           <div className="detail-side">
             <div className="detail-card glass">
               <div className="d-price">${listing.price.toFixed(2)}</div>
@@ -140,7 +134,7 @@ export default function ListingDetail() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* description */}
             <div className="detail-card glass">
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Description</h3>
               <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--txt)' }}>
@@ -148,7 +142,7 @@ export default function ListingDetail() {
               </p>
             </div>
 
-            {/* Actions */}
+            {/* actions */}
             {isOwner ? (
               <div style={{ display: 'flex', gap: 10 }}>
                 <Link to={`/edit-listing/${listing._id}`} className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }}>

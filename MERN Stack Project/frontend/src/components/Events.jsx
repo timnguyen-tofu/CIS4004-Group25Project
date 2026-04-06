@@ -1,7 +1,3 @@
-// ── Events.js ───────────────────────────────────────────────────
-// Browse campus events and RSVP.
-// Admins see extra controls to create, edit, and delete events.
-
 import { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -17,26 +13,26 @@ const EMPTY_EVENT = {
 
 export default function Events() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin  = user?.role === 'admin';
 
-  const [events, setEvents] = useState([]);
-  const [rsvpedIds, setRsvpedIds] = useState(new Set());
+  const [events, setEvents]         = useState([]);
+  const [rsvpedIds, setRsvpedIds]   = useState(new Set());
   const [rsvpCounts, setRsvpCounts] = useState({});
-  const [category, setCategory] = useState('All');
-  const [loading, setLoading] = useState(true);
+  const [category, setCategory]     = useState('All');
+  const [loading, setLoading]       = useState(true);
 
-  // Admin modal state
-  const [showModal, setShowModal] = useState(false);
+  // admin event modal
+  const [showModal, setShowModal]       = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [modalForm, setModalForm] = useState(EMPTY_EVENT);
-  const [modalError, setModalError] = useState('');
+  const [modalForm, setModalForm]       = useState(EMPTY_EVENT);
+  const [modalError, setModalError]     = useState('');
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Attendees modal state
-  const [attendeesEvent, setAttendeesEvent] = useState(null);
-  const [attendees, setAttendees] = useState([]);
+  // attendees modal
+  const [attendeesEvent, setAttendeesEvent]     = useState(null);
+  const [attendees, setAttendees]               = useState([]);
   const [attendeesLoading, setAttendeesLoading] = useState(false);
-  const [attendeesError, setAttendeesError] = useState('');
+  const [attendeesError, setAttendeesError]     = useState('');
 
   useEffect(() => {
     fetchAll();
@@ -54,14 +50,12 @@ export default function Events() {
       setEvents(eventsRes.data);
       setRsvpedIds(new Set(rsvpsRes.data.map(e => e._id)));
 
-      // Fetch RSVP counts for all events
+      // fetch RSVP count for each event
       const counts = {};
-      await Promise.all(
-        eventsRes.data.map(async (ev) => {
-          const r = await api.get(`/events/${ev._id}/rsvpcount`);
-          counts[ev._id] = r.data.count;
-        })
-      );
+      await Promise.all(eventsRes.data.map(async ev => {
+        const r = await api.get(`/events/${ev._id}/rsvpcount`);
+        counts[ev._id] = r.data.count;
+      }));
       setRsvpCounts(counts);
     } catch (err) {
       console.error(err);
@@ -86,7 +80,6 @@ export default function Events() {
     }
   }
 
-  // ── Admin Modal helpers ──────────────────────────────────────
   function openCreate() {
     setEditingEvent(null);
     setModalForm(EMPTY_EVENT);
@@ -166,20 +159,14 @@ export default function Events() {
       <Sidebar />
 
       <main className="page-content">
-        {/* ── Header ── */}
         <div className="page-header">
           <div>
             <h1 className="page-title">Campus Events</h1>
             <p className="page-subtitle">{events.length} upcoming event{events.length !== 1 ? 's' : ''}</p>
           </div>
-          {isAdmin && (
-            <button className="btn btn-gold" onClick={openCreate}>
-              + Create Event
-            </button>
-          )}
+          {isAdmin && <button className="btn btn-gold" onClick={openCreate}>+ Create Event</button>}
         </div>
 
-        {/* ── Category Filter ── */}
         <div className="filter-bar glass">
           <div className="category-pills">
             {CATEGORIES.map(cat => (
@@ -194,7 +181,6 @@ export default function Events() {
           </div>
         </div>
 
-        {/* ── Events List ── */}
         {loading ? (
           <div className="loading-state"><div className="spinner" /><p>Loading events…</p></div>
         ) : events.length === 0 ? (
@@ -208,26 +194,18 @@ export default function Events() {
               <div key={ev._id} className="event-card glass">
                 <div className="event-date-col">
                   <div className="event-date-box">
-                    <span className="event-month">
-                      {new Date(ev.date).toLocaleString('en-US', { month: 'short' })}
-                    </span>
-                    <span className="event-day">
-                      {new Date(ev.date).getDate()}
-                    </span>
+                    <span className="event-month">{new Date(ev.date).toLocaleString('en-US', { month: 'short' })}</span>
+                    <span className="event-day">{new Date(ev.date).getDate()}</span>
                   </div>
                 </div>
 
                 <div className="event-info">
                   <div className="event-badges">
                     <span className="badge badge-category">{ev.category}</span>
-                    {rsvpedIds.has(ev._id) && (
-                      <span className="badge badge-green">✓ RSVP'd</span>
-                    )}
+                    {rsvpedIds.has(ev._id) && <span className="badge badge-green">✓ RSVP'd</span>}
                   </div>
                   <h3 className="event-title">{ev.title}</h3>
-                  {ev.description && (
-                    <p className="event-description">{ev.description}</p>
-                  )}
+                  {ev.description && <p className="event-description">{ev.description}</p>}
                   <div className="event-meta">
                     {ev.time && <span>{ev.time}</span>}
                     <span>{ev.location}</span>
@@ -243,13 +221,7 @@ export default function Events() {
                   >
                     {rsvpedIds.has(ev._id) ? 'Cancel RSVP' : 'RSVP'}
                   </button>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={() => openAttendees(ev)}
-                  >
-                    Attendees
-                  </button>
-
+                  <button className="btn btn-outline btn-sm" onClick={() => openAttendees(ev)}>Attendees</button>
                   {isAdmin && (
                     <div className="admin-event-btns">
                       <button className="btn btn-outline btn-xs" onClick={() => openEdit(ev)}>Edit</button>
@@ -263,7 +235,7 @@ export default function Events() {
         )}
       </main>
 
-      {/* ── Attendees Modal ── */}
+      {/* attendees modal */}
       {attendeesEvent && (
         <div className="modal-overlay" onClick={() => setAttendeesEvent(null)}>
           <div className="modal-card glass" onClick={e => e.stopPropagation()}>
@@ -302,7 +274,7 @@ export default function Events() {
         </div>
       )}
 
-      {/* ── Admin Event Modal ── */}
+      {/* admin create/edit modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-card glass" onClick={e => e.stopPropagation()}>
@@ -318,12 +290,10 @@ export default function Events() {
                 <label className="form-label">Title *</label>
                 <input className="form-input" type="text" name="title" value={modalForm.title} onChange={handleModalChange} required />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Description</label>
                 <textarea className="form-input form-textarea" name="description" value={modalForm.description} onChange={handleModalChange} rows={3} />
               </div>
-
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Date *</label>
@@ -334,7 +304,6 @@ export default function Events() {
                   <input className="form-input" type="text" name="time" placeholder="e.g. 10:00 AM – 2:00 PM" value={modalForm.time} onChange={handleModalChange} />
                 </div>
               </div>
-
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Category</label>
@@ -351,12 +320,10 @@ export default function Events() {
                   </select>
                 </div>
               </div>
-
               <div className="form-group">
                 <label className="form-label">Location</label>
                 <input className="form-input" type="text" name="location" value={modalForm.location} onChange={handleModalChange} />
               </div>
-
               <div className="form-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-gold" disabled={modalLoading}>

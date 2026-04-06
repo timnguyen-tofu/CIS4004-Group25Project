@@ -32,6 +32,12 @@ export default function Events() {
   const [modalError, setModalError] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Attendees modal state
+  const [attendeesEvent, setAttendeesEvent] = useState(null);
+  const [attendees, setAttendees] = useState([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [attendeesError, setAttendeesError] = useState('');
+
   useEffect(() => {
     fetchAll();
     // eslint-disable-next-line
@@ -123,6 +129,21 @@ export default function Events() {
     }
   }
 
+  async function openAttendees(ev) {
+    setAttendeesEvent(ev);
+    setAttendees([]);
+    setAttendeesError('');
+    setAttendeesLoading(true);
+    try {
+      const res = await api.get(`/events/${ev._id}/rsvps`);
+      setAttendees(res.data);
+    } catch (err) {
+      setAttendeesError(err.response?.data?.message || 'Failed to load attendees.');
+    } finally {
+      setAttendeesLoading(false);
+    }
+  }
+
   async function handleDelete(id) {
     if (!window.confirm('Delete this event? All RSVPs will also be removed.')) return;
     try {
@@ -148,7 +169,7 @@ export default function Events() {
         {/* ── Header ── */}
         <div className="page-header">
           <div>
-            <h1 className="page-title">📅 Campus Events</h1>
+            <h1 className="page-title">Campus Events</h1>
             <p className="page-subtitle">{events.length} upcoming event{events.length !== 1 ? 's' : ''}</p>
           </div>
           {isAdmin && (
@@ -178,7 +199,7 @@ export default function Events() {
           <div className="loading-state"><div className="spinner" /><p>Loading events…</p></div>
         ) : events.length === 0 ? (
           <div className="empty-state glass">
-            <span className="empty-icon">📭</span>
+            <span className="empty-icon"></span>
             <p>No events found in this category.</p>
           </div>
         ) : (
@@ -208,9 +229,9 @@ export default function Events() {
                     <p className="event-description">{ev.description}</p>
                   )}
                   <div className="event-meta">
-                    {ev.time && <span>🕐 {ev.time}</span>}
-                    <span>📍 {ev.location}</span>
-                    <span>👥 {rsvpCounts[ev._id] || 0} RSVP{rsvpCounts[ev._id] !== 1 ? 's' : ''}</span>
+                    {ev.time && <span>{ev.time}</span>}
+                    <span>{ev.location}</span>
+                    <span>{rsvpCounts[ev._id] || 0} RSVP{rsvpCounts[ev._id] !== 1 ? 's' : ''}</span>
                     <span className="event-full-date">{formatDate(ev.date)}</span>
                   </div>
                 </div>
@@ -221,6 +242,12 @@ export default function Events() {
                     onClick={() => handleRsvp(ev._id)}
                   >
                     {rsvpedIds.has(ev._id) ? 'Cancel RSVP' : 'RSVP'}
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => openAttendees(ev)}
+                  >
+                    Attendees
                   </button>
 
                   {isAdmin && (
@@ -235,6 +262,45 @@ export default function Events() {
           </div>
         )}
       </main>
+
+      {/* ── Attendees Modal ── */}
+      {attendeesEvent && (
+        <div className="modal-overlay" onClick={() => setAttendeesEvent(null)}>
+          <div className="modal-card glass" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Attendees — {attendeesEvent.title}</h2>
+              <button className="modal-close" onClick={() => setAttendeesEvent(null)}>✕</button>
+            </div>
+            {attendeesLoading ? (
+              <div className="loading-state-sm"><div className="spinner spinner-sm" /></div>
+            ) : attendeesError ? (
+              <p style={{ padding: '16px', color: 'var(--danger, #e74c3c)' }}>{attendeesError}</p>
+            ) : attendees.length === 0 ? (
+              <p style={{ padding: '16px', color: 'var(--txt-muted)' }}>No one has RSVP'd yet.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: '8px 0', margin: 0, maxHeight: '360px', overflowY: 'auto' }}>
+                {attendees.map((u, i) => (
+                  <li key={u._id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,var(--gold),#e6a010)', color: '#0a0a0f', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {(u.firstName || u.username || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>
+                        {u.firstName ? `${u.firstName} ${u.lastName}` : u.username}
+                      </div>
+                      {u.firstName && <div style={{ fontSize: 12, color: 'var(--txt-muted)' }}>@{u.username}</div>}
+                    </div>
+                    <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--txt-dim)' }}>#{i + 1}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.07)', fontSize: 13, color: 'var(--txt-muted)' }}>
+              {attendees.length} attendee{attendees.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Admin Event Modal ── */}
       {showModal && (
@@ -294,7 +360,7 @@ export default function Events() {
               <div className="form-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-gold" disabled={modalLoading}>
-                  {modalLoading ? 'Saving…' : (editingEvent ? '💾 Save Changes' : '🚀 Create Event')}
+                  {modalLoading ? 'Saving…' : (editingEvent ? 'Save Changes' : 'Create Event')}
                 </button>
               </div>
             </form>

@@ -1,30 +1,36 @@
 // ── CreateListing.jsx ──────────────────────────────────────────
 // Form to create a new listing, then optionally upload up to 5 images.
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const CATEGORIES = [
-  'Textbooks', 'Electronics', 'Furniture', 'Clothing',
-  'Gaming', 'Rides', 'Sports', 'Music', 'Dorm Essentials', 'Other'
-];
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
 
 export default function CreateListing() {
   const navigate  = useNavigate();
   const fileRef   = useRef(null);
 
+  const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
     title: '', description: '', price: '',
-    category: 'Textbooks', condition: 'Good', location: 'UCF Main Campus'
+    category: '', condition: 'Good', location: 'UCF Main Campus'
   });
-  const [selectedFiles, setSelectedFiles] = useState([]);   // File objects
-  const [previews, setPreviews]           = useState([]);   // data URLs for preview
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previews, setPreviews]           = useState([]);
   const [error, setError]                 = useState('');
   const [loading, setLoading]             = useState(false);
+
+  useEffect(() => {
+    api.get('/categories').then(res => {
+      setCategories(res.data);
+      if (res.data.length > 0) {
+        setForm(f => ({ ...f, category: res.data[0].name }));
+      }
+    }).catch(console.error);
+  }, []);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -53,11 +59,9 @@ export default function CreateListing() {
 
     setLoading(true);
     try {
-      // 1. Create the listing
       const res = await api.post('/listings', { ...form, price });
       const listingId = res.data._id;
 
-      // 2. Upload images if any were selected
       if (selectedFiles.length > 0) {
         const fd = new FormData();
         selectedFiles.forEach(f => fd.append('images', f));
@@ -93,7 +97,7 @@ export default function CreateListing() {
             <div className="form-group">
               <label className="form-label">Photos (up to 5)</label>
               <div className="upload-area" onClick={() => fileRef.current?.click()}>
-                <span className="upload-icon">📷</span>
+                <span className="upload-icon"></span>
                 <p><strong>Click to add photos</strong></p>
                 <p>{selectedFiles.length}/5 selected</p>
                 <input
@@ -147,7 +151,7 @@ export default function CreateListing() {
                 <label className="form-label">Category *</label>
                 <select className="form-input form-select" name="category"
                   value={form.category} onChange={handleChange} required>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -171,7 +175,7 @@ export default function CreateListing() {
             <div className="form-actions">
               <Link to="/marketplace" className="btn btn-ghost">Cancel</Link>
               <button type="submit" className="btn btn-gold" disabled={loading}>
-                {loading ? 'Posting…' : '🚀 Post Listing'}
+                {loading ? 'Posting…' : 'Post Listing'}
               </button>
             </div>
           </form>

@@ -13,6 +13,7 @@ const express = require('express');
 const router  = express.Router();
 const Event   = require('../models/Event');
 const RSVP    = require('../models/RSVP');
+const User    = require('../models/User');
 const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
 // ── GET all published events ──────────────────────────────────
@@ -131,6 +132,18 @@ router.get('/:id/rsvpcount', async (req, res) => {
   try {
     const count = await RSVP.countDocuments({ event: req.params.id });
     res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.', error: err.message });
+  }
+});
+
+// ── GET list of users who RSVPed to an event ──────────────────
+router.get('/:id/rsvps', async (req, res) => {
+  try {
+    const rsvps = await RSVP.find({ event: req.params.id })
+      .populate('user', 'username firstName lastName');
+    const attendees = rsvps.map(r => r.user).filter(Boolean);
+    res.json(attendees);
   } catch (err) {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }

@@ -5,7 +5,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -29,7 +28,6 @@ export default function Navbar() {
     }
   }
 
-  const { unreadMessages } = useNotifications();
   const initial = (user?.firstName || user?.username || '?')[0].toUpperCase();
 
   return (
@@ -43,7 +41,7 @@ export default function Navbar() {
 
       {/* Search */}
       <form className="nav-search" onSubmit={handleSearch}>
-        <span className="search-icon">🔍</span>
+        <span className="search-icon"></span>
         <input
           type="text"
           placeholder="Search listings…"
@@ -55,16 +53,13 @@ export default function Navbar() {
       {/* Tab links */}
       <div className="nav-tabs">
         <Link to="/marketplace" className={`nav-tab ${isActive('/marketplace')}`}>
-          🛒 Marketplace
+          Marketplace
         </Link>
         <Link to="/events" className={`nav-tab ${isActive('/events')}`}>
-          📅 Events
+          Events
         </Link>
-        <Link to="/messages" className={`nav-tab ${isActive('/messages')}`} style={{ position: 'relative' }}>
-          💬 Messages
-          {unreadMessages > 0 && (
-            <span className="tab-badge">{unreadMessages > 99 ? '99+' : unreadMessages}</span>
-          )}
+        <Link to="/messages" className={`nav-tab ${isActive('/messages')}`}>
+          Messages
         </Link>
       </div>
 

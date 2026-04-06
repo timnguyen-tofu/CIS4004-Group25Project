@@ -7,24 +7,18 @@ import api from '../api';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const CATEGORIES = [
-  'All', 'Textbooks', 'Electronics', 'Furniture', 'Clothing',
-  'Gaming', 'Rides', 'Sports', 'Music', 'Dorm Essentials', 'Other'
-];
-
-const CATEGORY_ICONS = {
-  Textbooks: '📚', Electronics: '💻', Furniture: '🛋️', Clothing: '👕',
-  Gaming: '🎮', Rides: '🚗', Sports: '⚽', Music: '🎵',
-  'Dorm Essentials': '🏠', Other: '📦', All: '🛒'
-};
-
 export default function Marketplace() {
   const [listings, setListings]   = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
   const [category, setCategory]   = useState('All');
   const navigate                  = useNavigate();
   const [searchParams]            = useSearchParams();
+
+  useEffect(() => {
+    api.get('/categories').then(res => setCategories(res.data)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     const q = searchParams.get('search');
@@ -87,13 +81,19 @@ export default function Marketplace() {
 
         {/* ── Category pills ── */}
         <div className="cat-bar">
-          {CATEGORIES.map(cat => (
+          <button
+            className={`cat-pill ${category === 'All' ? 'active' : ''}`}
+            onClick={() => setCategory('All')}
+          >
+            All
+          </button>
+          {categories.map(cat => (
             <button
-              key={cat}
-              className={`cat-pill ${category === cat ? 'active' : ''}`}
-              onClick={() => setCategory(cat)}
+              key={cat._id}
+              className={`cat-pill ${category === cat.name ? 'active' : ''}`}
+              onClick={() => setCategory(cat.name)}
             >
-              {CATEGORY_ICONS[cat]} {cat}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -106,7 +106,7 @@ export default function Marketplace() {
           </div>
         ) : listings.length === 0 ? (
           <div className="empty-state glass">
-            <span className="empty-icon">📭</span>
+            <span className="empty-icon"></span>
             <p>No listings found. Try a different search or category.</p>
             <Link to="/create-listing" className="btn btn-gold" style={{ marginTop: 16 }}>Post Something</Link>
           </div>
@@ -121,13 +121,13 @@ export default function Marketplace() {
                 <div className="listing-card-img">
                   {listing.images && listing.images.length > 0
                     ? <img src={`/listing-images/${listing.images[0]}`} alt={listing.title} />
-                    : <span>{CATEGORY_ICONS[listing.category] || '📦'}</span>
+                    : <span>{listing.category}</span>
                   }
                 </div>
                 <div className="listing-info">
                   <div className="l-price">${listing.price.toFixed(2)}</div>
                   <div className="l-title">{listing.title}</div>
-                  <div className="l-loc">📍 {listing.location}</div>
+                  <div className="l-loc">{listing.location}</div>
                   <span className="l-badge">{listing.category}</span>
                 </div>
               </div>

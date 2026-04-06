@@ -2,6 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
+const Category = require('./models/Category');
 
 async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
@@ -34,6 +35,21 @@ async function seed() {
     const hashed = await bcrypt.hash(u.password, 10);
     await User.create({ ...u, password: hashed });
     console.log(`Created user: ${u.username} (role: ${u.role})`);
+  }
+
+  const defaultCategories = [
+    'Textbooks', 'Electronics', 'Furniture', 'Clothing',
+    'Gaming', 'Rides', 'Sports', 'Music', 'Dorm Essentials', 'Other'
+  ];
+
+  for (const name of defaultCategories) {
+    const exists = await Category.findOne({ name });
+    if (exists) {
+      console.log(`Category "${name}" already exists, skipping.`);
+      continue;
+    }
+    await Category.create({ name });
+    console.log(`Created category: ${name}`);
   }
 
   await mongoose.disconnect();

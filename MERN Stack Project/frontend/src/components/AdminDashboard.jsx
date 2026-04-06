@@ -1,13 +1,13 @@
 // ── AdminDashboard.js ───────────────────────────────────────────
 // Admin-only page.
-// Shows stats, manages all users and all listings.
+// Shows stats, manages all users, listings, and categories.
 
 import { useEffect, useState } from 'react';
 import api from '../api';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const TABS = ['Overview', 'Users', 'Listings'];
+const TABS = ['Overview', 'Users', 'Listings', 'Categories'];
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -20,15 +20,23 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
 
-  // Listings (all, including inactive)
+  // Listings
   const [listings, setListings] = useState([]);
   const [listingsLoading, setListingsLoading] = useState(false);
 
+  // Categories
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [categoryAdding, setCategoryAdding] = useState(false);
+
   // ── Fetch on tab switch ──────────────────────────────────────
   useEffect(() => {
-    if (activeTab === 'Overview') fetchStats();
-    if (activeTab === 'Users')    fetchUsers();
-    if (activeTab === 'Listings') fetchListings();
+    if (activeTab === 'Overview')   fetchStats();
+    if (activeTab === 'Users')      fetchUsers();
+    if (activeTab === 'Listings')   fetchListings();
+    if (activeTab === 'Categories') fetchCategories();
   }, [activeTab]);
 
   async function fetchStats() {
@@ -58,13 +66,24 @@ export default function AdminDashboard() {
   async function fetchListings() {
     setListingsLoading(true);
     try {
-      // Fetch all listings regardless of status using admin endpoint
       const res = await api.get('/listings');
       setListings(res.data);
     } catch (err) {
       console.error(err);
     } finally {
       setListingsLoading(false);
+    }
+  }
+
+  async function fetchCategories() {
+    setCategoriesLoading(true);
+    try {
+      const res = await api.get('/categories');
+      setCategories(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCategoriesLoading(false);
     }
   }
 
@@ -101,6 +120,33 @@ export default function AdminDashboard() {
     }
   }
 
+  // ── Category actions ─────────────────────────────────────────
+  async function handleAddCategory(e) {
+    e.preventDefault();
+    setCategoryError('');
+    if (!newCategoryName.trim()) return;
+    setCategoryAdding(true);
+    try {
+      const res = await api.post('/categories', { name: newCategoryName.trim() });
+      setCategories(prev => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewCategoryName('');
+    } catch (err) {
+      setCategoryError(err.response?.data?.message || 'Failed to add category.');
+    } finally {
+      setCategoryAdding(false);
+    }
+  }
+
+  async function handleDeleteCategory(id, name) {
+    if (!window.confirm(`Delete category "${name}"? Existing listings will keep this category label but it will no longer appear in filters.`)) return;
+    try {
+      await api.delete(`/categories/${id}`);
+      setCategories(prev => prev.filter(c => c._id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete category.');
+    }
+  }
+
   return (
     <div className="app-layout">
       <Navbar />
@@ -109,8 +155,8 @@ export default function AdminDashboard() {
       <main className="page-content">
         <div className="page-header">
           <div>
-            <h1 className="page-title">🛡️ Admin Dashboard</h1>
-            <p className="page-subtitle">Manage users, listings, and events</p>
+            <h1 className="page-title">Admin Dashboard</h1>
+            <p className="page-subtitle">Manage users, listings, events, and categories</p>
           </div>
         </div>
 
@@ -135,22 +181,22 @@ export default function AdminDashboard() {
             ) : stats ? (
               <div className="stats-grid">
                 <div className="stat-card glass">
-                  <span className="stat-icon">👥</span>
+                  <span className="stat-icon"></span>
                   <span className="stat-value">{stats.totalUsers}</span>
                   <span className="stat-label">Total Students</span>
                 </div>
                 <div className="stat-card glass">
-                  <span className="stat-icon">🛒</span>
+                  <span className="stat-icon"></span>
                   <span className="stat-value">{stats.totalListings}</span>
                   <span className="stat-label">Active Listings</span>
                 </div>
                 <div className="stat-card glass">
-                  <span className="stat-icon">📅</span>
+                  <span className="stat-icon"></span>
                   <span className="stat-value">{stats.totalEvents}</span>
                   <span className="stat-label">Published Events</span>
                 </div>
                 <div className="stat-card glass">
-                  <span className="stat-icon">🛡️</span>
+                  <span className="stat-icon"></span>
                   <span className="stat-value">{stats.totalAdmins}</span>
                   <span className="stat-label">Admins</span>
                 </div>
@@ -160,13 +206,14 @@ export default function AdminDashboard() {
             )}
 
             <div className="admin-info glass">
-              <h2 className="section-title">ℹ️ Admin Capabilities</h2>
+              <h2 className="section-title">Admin Capabilities</h2>
               <ul className="admin-info-list">
-                <li>🔐 Promote or demote users between Student and Admin roles</li>
-                <li>🗑️ Delete any user account and their associated data</li>
-                <li>📦 Remove any listing from the marketplace</li>
-                <li>📅 Create, edit, and delete campus events</li>
-                <li>👁️ View all platform activity across users</li>
+                <li>Promote or demote users between Student and Admin roles</li>
+                <li>Delete any user account and their associated data</li>
+                <li>Remove any listing from the marketplace</li>
+                <li>Create, edit, and delete campus events</li>
+                <li>Add and remove listing categories</li>
+                <li>View all platform activity across users</li>
               </ul>
             </div>
           </div>
@@ -275,6 +322,66 @@ export default function AdminDashboard() {
                           <button
                             className="btn btn-danger btn-xs"
                             onClick={() => deleteListing(l._id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Categories Tab ── */}
+        {activeTab === 'Categories' && (
+          <div className="admin-table-section">
+            <h2 className="section-title">Listing Categories ({categories.length})</h2>
+
+            {/* Add category form */}
+            <div className="glass" style={{ padding: '20px', marginBottom: '20px', borderRadius: '12px' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: 'var(--txt)' }}>Add New Category</h3>
+              {categoryError && <div className="alert alert-error" style={{ marginBottom: 12 }}>{categoryError}</div>}
+              <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: 10 }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="Category name…"
+                  value={newCategoryName}
+                  onChange={e => setNewCategoryName(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button type="submit" className="btn btn-gold" disabled={categoryAdding || !newCategoryName.trim()}>
+                  {categoryAdding ? 'Adding…' : 'Add'}
+                </button>
+              </form>
+            </div>
+
+            {categoriesLoading ? (
+              <div className="loading-state"><div className="spinner" /><p>Loading categories…</p></div>
+            ) : categories.length === 0 ? (
+              <p style={{ color: 'var(--txt-muted)' }}>No categories yet. Add one above.</p>
+            ) : (
+              <div className="admin-table-wrapper glass">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Category Name</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map(c => (
+                      <tr key={c._id}>
+                        <td>{c.name}</td>
+                        <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <button
+                            className="btn btn-danger btn-xs"
+                            onClick={() => handleDeleteCategory(c._id, c.name)}
                           >
                             Delete
                           </button>

@@ -21,11 +21,7 @@ const listingSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true,
-    enum: [
-      'Textbooks', 'Electronics', 'Furniture', 'Clothing',
-      'Gaming', 'Rides', 'Sports', 'Music', 'Dorm Essentials', 'Other'
-    ]
+    required: true
   },
   condition: {
     type: String,

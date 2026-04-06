@@ -18,18 +18,20 @@ app.use(express.json());
 app.use('/listing-images', express.static(path.join(__dirname, 'listing-images')));
 
 // ── Import Routes ────────────────────────────────────────────
-const authRoutes     = require('./routes/auth');
-const listingRoutes  = require('./routes/listings');
-const eventRoutes    = require('./routes/events');
-const messageRoutes  = require('./routes/messages');
-const userRoutes     = require('./routes/users');
+const authRoutes       = require('./routes/auth');
+const listingRoutes    = require('./routes/listings');
+const eventRoutes      = require('./routes/events');
+const messageRoutes    = require('./routes/messages');
+const userRoutes       = require('./routes/users');
+const categoryRoutes   = require('./routes/categories');
 
 // ── Use Routes ───────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/listings', listingRoutes);
-app.use('/api/events',   eventRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/users',    userRoutes);
+app.use('/api/auth',       authRoutes);
+app.use('/api/listings',   listingRoutes);
+app.use('/api/events',     eventRoutes);
+app.use('/api/messages',   messageRoutes);
+app.use('/api/users',      userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // ── Root route (health check) ────────────────────────────────
 app.get('/', (req, res) => {

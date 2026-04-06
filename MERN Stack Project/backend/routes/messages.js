@@ -10,20 +10,6 @@ const router  = express.Router();
 const Message = require('../models/Message');
 const { verifyToken } = require('../middleware/auth');
 
-// ── GET total unread count (for navbar/sidebar badge) ─────────
-// Must be before /:userId to avoid being shadowed
-router.get('/unread-count', verifyToken, async (req, res) => {
-  try {
-    const count = await Message.countDocuments({
-      receiver: req.user.id,
-      read: { $ne: true }
-    });
-    res.json({ count });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
-  }
-});
-
 // ── GET all conversations with per-conversation unread count ──
 router.get('/conversations', verifyToken, async (req, res) => {
   try {
@@ -114,19 +100,6 @@ router.post('/', verifyToken, async (req, res) => {
     await message.save();
     await message.populate('sender', 'username');
     res.status(201).json(message);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error.', error: err.message });
-  }
-});
-
-// ── PATCH mark all messages from a user as read ───────────────
-router.patch('/:userId/read', verifyToken, async (req, res) => {
-  try {
-    await Message.updateMany(
-      { sender: req.params.userId, receiver: req.user.id, read: false },
-      { $set: { read: true } }
-    );
-    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ message: 'Server error.', error: err.message });
   }

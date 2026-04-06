@@ -8,10 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const CATEGORIES = [
-  'Textbooks', 'Electronics', 'Furniture', 'Clothing',
-  'Gaming', 'Rides', 'Sports', 'Music', 'Dorm Essentials', 'Other'
-];
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
 const STATUSES   = ['active', 'sold', 'removed'];
 
@@ -21,15 +17,20 @@ export default function EditListing() {
   const navigate  = useNavigate();
   const fileRef   = useRef(null);
 
-  const [form, setForm]             = useState(null);
-  const [existingImgs, setExisting] = useState([]);    // filenames already saved
-  const [newFiles, setNewFiles]     = useState([]);    // File objects to upload
-  const [newPreviews, setNewPreviews] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
-  const [error, setError]           = useState('');
+  const [categories, setCategories]     = useState([]);
+  const [form, setForm]                 = useState(null);
+  const [existingImgs, setExisting]     = useState([]);
+  const [newFiles, setNewFiles]         = useState([]);
+  const [newPreviews, setNewPreviews]   = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState('');
 
-  useEffect(() => { fetchListing(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => {
+    api.get('/categories').then(res => setCategories(res.data)).catch(console.error);
+    fetchListing();
+    // eslint-disable-next-line
+  }, [id]);
 
   async function fetchListing() {
     try {
@@ -126,8 +127,8 @@ export default function EditListing() {
     </div>
   );
 
-  const totalImgs   = existingImgs.length + newFiles.length;
-  const canAddMore  = totalImgs < 5;
+  const totalImgs  = existingImgs.length + newFiles.length;
+  const canAddMore = totalImgs < 5;
 
   return (
     <div className="app-layout">
@@ -146,7 +147,6 @@ export default function EditListing() {
             <div className="form-group">
               <label className="form-label">Photos ({totalImgs}/5)</label>
 
-              {/* Existing photos */}
               {existingImgs.length > 0 && (
                 <div className="img-preview-grid" style={{ marginBottom: 10 }}>
                   {existingImgs.map(filename => (
@@ -159,7 +159,6 @@ export default function EditListing() {
                       >✕</button>
                     </div>
                   ))}
-                  {/* New photos queued for upload */}
                   {newPreviews.map((url, i) => (
                     <div key={`new-${i}`} className="img-preview-item">
                       <img src={url} alt={`new ${i + 1}`} />
@@ -173,10 +172,9 @@ export default function EditListing() {
                 </div>
               )}
 
-              {/* Show upload area only when no existing images yet, or add more */}
               {existingImgs.length === 0 && newPreviews.length === 0 && (
                 <div className="upload-area" onClick={() => fileRef.current?.click()}>
-                  <span className="upload-icon">📷</span>
+                  <span className="upload-icon"></span>
                   <p><strong>Click to add photos</strong></p>
                   <p>0/5 added</p>
                   <input ref={fileRef} type="file" accept="image/*" multiple
@@ -220,7 +218,7 @@ export default function EditListing() {
                 <label className="form-label">Category *</label>
                 <select className="form-input form-select" name="category"
                   value={form.category} onChange={handleChange}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -251,7 +249,7 @@ export default function EditListing() {
             <div className="form-actions">
               <Link to={`/listings/${id}`} className="btn btn-ghost">Cancel</Link>
               <button type="submit" className="btn btn-gold" disabled={saving}>
-                {saving ? 'Saving…' : '💾 Save Changes'}
+                {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </form>

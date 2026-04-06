@@ -3,7 +3,6 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
 
 import Login          from './components/Login.jsx';
 import Register       from './components/Register.jsx';
@@ -33,7 +32,6 @@ function AdminRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <NotificationProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/"         element={<Login />} />
@@ -53,7 +51,6 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-      </NotificationProvider>
     </AuthProvider>
   );
 }

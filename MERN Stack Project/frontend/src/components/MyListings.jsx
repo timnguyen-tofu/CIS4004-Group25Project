@@ -51,7 +51,7 @@ export default function MyListings() {
       <main className="page-content">
         <div className="page-header">
           <div>
-            <h1 className="page-title">📦 My Listings</h1>
+            <h1 className="page-title">My Listings</h1>
             <p className="page-subtitle">{listings.length} listing{listings.length !== 1 ? 's' : ''} posted</p>
           </div>
           <Link to="/create-listing" className="btn btn-gold">+ New Listing</Link>
@@ -61,7 +61,7 @@ export default function MyListings() {
           <div className="loading-state"><div className="spinner" /><p>Loading…</p></div>
         ) : listings.length === 0 ? (
           <div className="empty-state glass">
-            <span className="empty-icon">📭</span>
+            <span className="empty-icon"></span>
             <p>You haven't posted any listings yet.</p>
             <Link to="/create-listing" className="btn btn-gold">Post Your First Item</Link>
           </div>

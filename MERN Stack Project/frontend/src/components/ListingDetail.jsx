@@ -8,11 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const CATEGORY_ICONS = {
-  Textbooks: '📚', Electronics: '💻', Furniture: '🛋️', Clothing: '👕',
-  Gaming: '🎮', Rides: '🚗', Sports: '⚽', Music: '🎵',
-  'Dorm Essentials': '🏠', Other: '📦'
-};
+const CATEGORY_ICONS = {};
 
 export default function ListingDetail() {
   const { id }        = useParams();
@@ -66,7 +62,7 @@ export default function ListingDetail() {
     <div className="app-layout"><Navbar /><Sidebar />
       <main className="page-content">
         <div className="empty-state glass">
-          <span className="empty-icon">❌</span>
+          <span className="empty-icon"></span>
           <p>{error || 'Listing not found.'}</p>
           <Link to="/marketplace" className="btn btn-gold" style={{ marginTop: 16 }}>Back to Marketplace</Link>
         </div>
@@ -156,10 +152,10 @@ export default function ListingDetail() {
             {isOwner ? (
               <div style={{ display: 'flex', gap: 10 }}>
                 <Link to={`/edit-listing/${listing._id}`} className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }}>
-                  ✏️ Edit Listing
+                  Edit Listing
                 </Link>
                 <button className="btn btn-danger" onClick={handleDelete} disabled={deleting} style={{ flex: 1 }}>
-                  {deleting ? 'Deleting…' : '🗑️ Delete'}
+                  {deleting ? 'Deleting…' : 'Delete'}
                 </button>
               </div>
             ) : listing.seller && (
@@ -168,7 +164,7 @@ export default function ListingDetail() {
                 state={{ listing: { id: listing._id, title: listing.title } }}
                 className="btn btn-gold btn-lg btn-full"
               >
-                💬 Message Seller
+                Message Seller
               </Link>
             )}
           </div>

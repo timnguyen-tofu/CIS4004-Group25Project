@@ -240,7 +240,7 @@ export default function Events() {
         <div className="modal-overlay" onClick={() => setAttendeesEvent(null)}>
           <div className="modal-card glass" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Attendees — {attendeesEvent.title}</h2>
+              <h2 className="modal-title">Attendees: {attendeesEvent.title}</h2>
               <button className="modal-close" onClick={() => setAttendeesEvent(null)}>✕</button>
             </div>
             {attendeesLoading ? (
@@ -301,7 +301,7 @@ export default function Events() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Time</label>
-                  <input className="form-input" type="text" name="time" placeholder="e.g. 10:00 AM – 2:00 PM" value={modalForm.time} onChange={handleModalChange} />
+                  <input className="form-input" type="text" name="time" placeholder="e.g. 10:00 AM - 2:00 PM" value={modalForm.time} onChange={handleModalChange} />
                 </div>
               </div>
               <div className="form-row">

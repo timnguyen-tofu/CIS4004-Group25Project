@@ -39,23 +39,9 @@ export default function Login() {
           <span className="lb-icon">⚔️</span>
           <div className="lb-name">Knight Market</div>
           <p className="lb-desc">
-            UCF's official student marketplace — buy, sell, and trade
+            UCF's official student marketplace. Buy, sell, and trade
             with fellow Knights on campus.
           </p>
-          <div className="lb-stats">
-            <div>
-              <div className="lb-stat-n">500+</div>
-              <div className="lb-stat-l">Students</div>
-            </div>
-            <div>
-              <div className="lb-stat-n">1k+</div>
-              <div className="lb-stat-l">Listings</div>
-            </div>
-            <div>
-              <div className="lb-stat-n">Free</div>
-              <div className="lb-stat-l">Forever</div>
-            </div>
-          </div>
         </div>
 
         {/* login card */}

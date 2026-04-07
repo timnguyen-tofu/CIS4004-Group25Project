@@ -223,7 +223,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {users.map(u => (
                       <tr key={u._id}>
-                        <td>{u.firstName || u.lastName ? `${u.firstName} ${u.lastName}`.trim() : '—'}</td>
+                        <td>{u.firstName || u.lastName ? `${u.firstName} ${u.lastName}`.trim() : 'N/A'}</td>
                         <td>@{u.username}</td>
                         <td>{u.email}</td>
                         <td>
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                         <td>
                           <span className={`badge ${l.status === 'active' ? 'badge-green' : 'badge-red'}`}>{l.status}</span>
                         </td>
-                        <td>{l.seller?.username || '—'}</td>
+                        <td>{l.seller?.username || 'N/A'}</td>
                         <td>
                           <button className="btn btn-danger btn-xs" onClick={() => deleteListing(l._id)}>Delete</button>
                         </td>
